@@ -378,6 +378,8 @@ export default class LanguageLearner extends Plugin {
                 `#word\n` +
                 `#### ${word.expression}\n` +
                 `${this.settings.review_delimiter}\n` +
+                `**音标**：\n` +
+                `<audio src="http://dict.youdao.com/dictvoice?audio=${word.expression}" controls style="width:300px;"></audio>\n` +
                 `${word.meaning}\n` +
                 `${notes}` +
                 `${sentences}` +

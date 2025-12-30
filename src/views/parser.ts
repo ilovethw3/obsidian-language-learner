@@ -66,7 +66,18 @@ export class TextParser {
             })
         ).phrases;
 
-        const ast = this.processor.parse(text);
+        const links: string[] = [];
+        const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+        const textWithPlaceholders = text.replace(
+            markdownLinkRegex,
+            (match, linkText, url) => {
+                const linkIndex = links.length;
+                links.push(url);
+                return `LLINK${linkIndex}SS${linkText}EELINK${linkIndex}SS`;
+            }
+        );
+
+        const ast = this.processor.parse(textWithPlaceholders);
 
         // 获得文章中去重后的单词
         let wordSet: Set<string> = new Set();
@@ -83,7 +94,16 @@ export class TextParser {
         stored.words.forEach((w) => this.words.set(w.text, w));
 
         let HTML = this.processor.stringify(ast) as any as string;
-        return HTML;
+        
+        const finalHTML = HTML.replace(
+            /LLINK(\d+)SS(.*?)EELINK\1SS/g,
+            (match, index, content) => {
+                const url = links[parseInt(index, 10)];
+                return `<a href="${url}">${content}</a>`;
+            }
+        );
+
+        return finalHTML;
     }
 
     async getWordsPhrases(text: string) {

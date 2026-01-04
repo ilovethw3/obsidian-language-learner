@@ -66,7 +66,7 @@ export default class LanguageLearner extends Plugin {
                 this.settings.port,
                 this.settings.use_https,
                 this.settings.api_key
-                )
+            )
             : new LocalDb(this);
         await this.db.open();
 
@@ -344,10 +344,14 @@ export default class LanguageLearner extends Plugin {
         let db = dataBase as TFile;
         let text = await this.app.vault.read(db);
         let oldRecord = {} as { [K in string]: string };
-        text.match(/#word(\n.+)+\n(<!--SR.*?-->)/g)
-            ?.map((v) => v.match(/#### (.+)[\s\S]+(<!--SR.*-->)/))
+        // Match pattern: #word followed by #### expression, then any content, then SR tag
+        // Using [\s\S]*? for non-greedy match of any content including newlines
+        text.match(/#word\n#### (.+?)\n[\s\S]*?(<!--SR.*?-->)/g)
+            ?.map((v) => v.match(/#word\n#### (.+?)\n[\s\S]*?(<!--SR.*?-->)/))
             ?.forEach((v) => {
-                oldRecord[v[1]] = v[2];
+                if (v && v[1] && v[2]) {
+                    oldRecord[v[1]] = v[2];
+                }
             });
 
         // let data = await this.db.getExpressionAfter(this.settings.last_sync)
@@ -367,12 +371,11 @@ export default class LanguageLearner extends Plugin {
                 ? ""
                 : "**Sentences**:\n" +
                 word.sentences.map((sen) => {
-                    return (
-                        `*${sen.text.trim()}*` + "\n" +
-                        (sen.trans ? sen.trans.trim() + "\n" : "") +
-                        (sen.origin ? sen.origin.trim() : "")
-                    );
-                }).join("\n").trim() + "\n";
+                    let parts = [`*${sen.text.trim()}*`];
+                    if (sen.trans) parts.push(sen.trans.trim());
+                    if (sen.origin) parts.push(sen.origin.trim());
+                    return parts.join("\n");
+                }).join("\n") + "\n";
 
             return (
                 `#word\n` +

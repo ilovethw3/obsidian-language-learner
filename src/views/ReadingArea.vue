@@ -232,9 +232,17 @@ watch(
                 ? totalLines
                 : start + pageSize.value;
 
-        renderedText.value = await plugin.parser.parse(
-            article.slice(start, end).join("\n")
+        // Step 1: Render Markdown to HTML
+        const tempContainer = document.createElement('div');
+        await MarkdownRenderer.renderMarkdown(
+            article.slice(start, end).join("\n"),
+            tempContainer,
+            view.file.path,
+            view
         );
+
+        // Step 2: Apply word highlighting to rendered HTML
+        renderedText.value = await plugin.parser.parseRenderedHTML(tempContainer);
 
         if (p !== prev_p || pc != prev_pc) {
             plugin.frontManager.setFrontMatter(

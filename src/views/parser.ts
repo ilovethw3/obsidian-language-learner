@@ -33,6 +33,41 @@ export class TextParser {
         return newHTML;
     }
 
+    /**
+     * Parse already-rendered Markdown HTML and apply word highlighting.
+     * Processes both paragraphs and list items.
+     */
+    async parseRenderedHTML(container: HTMLElement): Promise<string> {
+        // Process paragraphs
+        const paragraphs = container.querySelectorAll('p');
+        for (const p of paragraphs) {
+            await this.processElement(p as HTMLElement);
+        }
+
+        // Process list items
+        const listItems = container.querySelectorAll('li');
+        for (const li of listItems) {
+            await this.processElement(li as HTMLElement);
+        }
+
+        return container.innerHTML;
+    }
+
+    /**
+     * Process a single element (paragraph or list item) by applying word highlighting
+     */
+    private async processElement(element: HTMLElement): Promise<void> {
+        // Get the text content
+        const text = element.textContent || '';
+        if (!text.trim()) return;
+
+        // Parse the text to get highlighted HTML
+        const highlightedHTML = await this.text2HTML(text);
+
+        // Replace the element's content with highlighted version
+        element.innerHTML = highlightedHTML;
+    }
+
     async countWords(text: string): Promise<[number, number, number]> {
         const ast = this.processor.parse(text);
         let wordSet: Set<string> = new Set();

@@ -362,10 +362,26 @@ useEvent(window, "obsidian-langr-search", async (evt: CustomEvent) => {
 	let filledTrans = null;
 
 	if (target) {
-		let sentenceEl = target.parentElement.hasClass("stns")
-			? target.parentElement
-			: target.parentElement.parentElement;
-		sentenceText = sentenceEl.textContent;
+		// Find the sentence container (.stns)
+		// With the new implementation, each paragraph has one .stns wrapping all content
+		let sentenceEl: HTMLElement = null;
+		
+		// Traverse up to find .stns element
+		let currentEl = target;
+		let maxDepth = 10;
+		while (currentEl && maxDepth > 0) {
+			if (currentEl.hasClass && currentEl.hasClass("stns")) {
+				sentenceEl = currentEl;
+				break;
+			}
+			currentEl = currentEl.parentElement;
+			maxDepth--;
+		}
+		
+		// Extract text from the sentence container
+		if (sentenceEl) {
+			sentenceText = sentenceEl.innerText || sentenceEl.textContent;
+		}
 
 		storedSen = await plugin.db.tryGetSen(sentenceText);
 
